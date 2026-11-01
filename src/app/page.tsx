@@ -1,10 +1,14 @@
+import BannerSection from "@/component/BannerSection";
 
 
 
 export default function Home() {
   return (
-    <div> 
-      Hello World
-      </div>
+    <main>
+
+
+      <BannerSection/>
+    </main>
+     
   );
 }
