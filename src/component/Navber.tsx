@@ -16,7 +16,7 @@ const Navbar = () => {
   const navLinks = [
     { title: "Home", href: "/" },
     { title: "All Books", href: "/books" },
-    { title: "Add Book", href: "/add-book" },
+    { title: "Add Book", href: "/add-destination" },
     { title: "My Books", href: "/my-books" },
     { title: "My Borrows", href: "/my-borrows" },
   ];
