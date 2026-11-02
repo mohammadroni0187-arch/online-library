@@ -91,7 +91,7 @@ const SignUp = () => {
       }
 
       if (data) {
-        router.push("/login")
+        router.push("/")
         router.refresh()
       }
     } catch {
