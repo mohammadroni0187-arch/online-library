@@ -17,7 +17,7 @@ const Navbar = () => {
     { title: "Home", href: "/" },
     { title: "All Books", href: "/books" },
     { title: "Add Book", href: "/add-destination" },
-    { title: "My Books", href: "/my-books" },
+    { title: "My Books", href: "/my-book" },
     { title: "My Borrows", href: "/my-borrows" },
   ];
 
@@ -53,14 +53,20 @@ const Navbar = () => {
 
         {/* Auth Buttons */}
         <div className="hidden items-center gap-3 md:flex">
-          <Button variant="outline" asChild>
-            <Link href="/login">Login</Link>
-          </Button>
+                <Link
+                  href="/login"
+                  className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  Login
+                </Link>
 
-          <Button className="bg-blue-900 text-white hover:bg-blue-800" asChild>
-            <Link href="/singUp">Register</Link>
-          </Button>
-        </div>
+                <Link
+                  href="/signUp"
+                  className="inline-flex h-9 items-center justify-center rounded-md bg-blue-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800"
+                >
+                  Register
+                </Link>
+              </div>
 
         {/* Mobile Menu Icon */}
         <Button variant="ghost" size="icon" className="md:hidden">

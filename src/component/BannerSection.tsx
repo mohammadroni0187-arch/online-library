@@ -74,15 +74,13 @@ const BannerSection = () => {
                   {slide.description}
                 </p>
 
-                <Button
-                  render={<Link href="/books" />}
-                  className="mt-8 bg-orange-500 px-7 py-6 text-base text-white hover:bg-orange-600"
-                >
-                  <Link href="/books">
+                  <Link
+                    href="/books"
+                    className="mt-8 inline-flex items-center rounded-lg bg-orange-500 px-7 py-4 text-base font-semibold text-white transition hover:bg-orange-600"
+                  >
                     Browse Books
                     <ArrowRight className="ml-2" size={18} />
                   </Link>
-                </Button>
               </div>
             </div>
           </SwiperSlide>
