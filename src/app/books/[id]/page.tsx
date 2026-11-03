@@ -4,6 +4,7 @@ import React from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, UserRound, ArrowLeft } from "lucide-react";
+import BorrowButton from '@/component/BorrowButton';
 
 interface Book {
   _id: string;
@@ -65,6 +66,7 @@ const BookDetailsPage = async ({ params }: BookDetailsPageProps) => {
                 src={book.image}
                 alt={book.title}
                 fill
+                priority
                 unoptimized
                 className="object-contain"
               />
@@ -117,14 +119,7 @@ const BookDetailsPage = async ({ params }: BookDetailsPageProps) => {
               </div>
             </div>
 
-            <button
-              disabled={(book.availableCopies ?? book.totalCopies ?? 0) <= 0}
-              className="mt-8 w-full rounded-xl bg-emerald-700 px-6 py-3 font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {(book.availableCopies ?? book.totalCopies ?? 0) > 0
-                ? "Borrow This Book"
-                : "Currently Unavailable"}
-            </button>
+            <BorrowButton book={book} />
 
           </div>
         </div>

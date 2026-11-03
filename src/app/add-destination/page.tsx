@@ -2,13 +2,16 @@
 "use client";
 
 import { BookOpen } from "lucide-react";
-import { useState,  SubmitEvent  } from "react";
+import Image from "next/image";
+import { useState, type FormEvent } from "react";
+import { toast } from "react-toastify";
 
 const initialForm = {
   title: "",
   author: "",
   category: "Fiction",
   totalCopies: 1,
+  image: "",
   description: "",
   userName: "Your Name",
   userEmail: "your@email.com",
@@ -17,107 +20,155 @@ const initialForm = {
 const AddBook = () => {
   const [form, setForm] = useState(initialForm);
   const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Update form values
-  const update = (field: keyof typeof form, value: string | number) => {
+  const update = (
+    field: keyof typeof form,
+    value: string | number
+  ) => {
     setForm((current) => ({
       ...current,
       [field]: value,
     }));
   };
 
-  // Handle form submit
-  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
+  // Step 1: Upload image to ImgBB
+  const uploadImage = async () => {
+  if (!image) {
+    throw new Error("Please select a book image");
+  }
+
+  const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("ImgBB API key is missing");
+  }
+
+  const formData = new FormData();
+  formData.append("image", image);
+
+  const res = await fetch(
+    `https://api.imgbb.com/1/upload?key=${apiKey}`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    throw new Error(data.error?.message || "Image upload failed");
+  }
+
+  return data.data.url as string;
+};
+
+  // Step 2: Submit book information
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
-  const res = await fetch('http://localhost:8000/add-destination',{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-    },
-    body:JSON.stringify(form)
-  })
-  const data = await res.json()
-  console.log(data)
-    const bookData = {
-      ...form,
-      image,
-    };
 
-    console.log("Book Data:", bookData);
+    try {
+      setLoading(true);
 
-    // Later: Send bookData to your API
+      // First upload image
+      const imageUrl = await uploadImage();
+
+      // Then create book data
+      const bookData = {
+        ...form,
+        image: imageUrl,
+        availableCopies: form.totalCopies,
+        createdAt: new Date(),
+      };
+
+      // Send data to backend
+      const res = await fetch(
+        "http://localhost:8000/add-destination",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bookData),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to add book");
+      }
+
+      toast.success("Book added successfully!");
+
+      setForm(initialForm);
+      setImage(null);
+      setPreview("");
+    } catch (error) {
+      console.error("Add Book Error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
-  
 
   return (
     <main className="min-h-screen bg-[#0b1510] text-white">
-      {/* Header Section */}
       <section className="border-b border-white/5 bg-[#17251c] px-4 py-8 text-center sm:py-10">
         <div className="mx-auto flex max-w-3xl flex-col items-center">
           <BookOpen className="mb-2 text-[#91d5a7]" size={26} />
-
           <h1 className="font-serif text-3xl font-bold sm:text-4xl">
             Add a Book
           </h1>
-
           <p className="mt-2 text-sm text-gray-400">
             Put a book from your shelf into the library.
           </p>
         </div>
       </section>
 
-      {/* Form Section */}
       <section className="mx-auto w-full max-w-3xl px-4 py-10 sm:py-14">
         <form onSubmit={handleSubmit} className="space-y-5">
 
-          {/* Book Title & Author */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="title" className="mb-2 block text-sm font-medium">
-                Book Title
-              </label>
-
+              <label htmlFor="title">Book Title</label>
               <input
                 id="title"
-                type="text"
-                placeholder="Enter book title"
                 value={form.title}
                 onChange={(e) => update("title", e.target.value)}
                 required
-                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5 text-sm outline-none focus:border-[#91d5a7]"
+                placeholder="Enter book title"
+                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5"
               />
             </div>
 
             <div>
-              <label htmlFor="author" className="mb-2 block text-sm font-medium">
-                Author Name
-              </label>
-
+              <label htmlFor="author">Author Name</label>
               <input
                 id="author"
-                type="text"
-                placeholder="Enter author name"
                 value={form.author}
                 onChange={(e) => update("author", e.target.value)}
                 required
-                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5 text-sm outline-none focus:border-[#91d5a7]"
+                placeholder="Enter author name"
+                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5"
               />
             </div>
           </div>
 
-          {/* Category & Total Copies */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="category" className="mb-2 block text-sm font-medium">
-                Category
-              </label>
-
+              <label htmlFor="category">Category</label>
               <select
                 id="category"
                 value={form.category}
                 onChange={(e) => update("category", e.target.value)}
-                required
-                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5 text-sm outline-none focus:border-[#91d5a7]"
+                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5"
               >
                 <option value="Fiction">Fiction</option>
                 <option value="Science">Science</option>
@@ -128,10 +179,7 @@ const AddBook = () => {
             </div>
 
             <div>
-              <label htmlFor="copies" className="mb-2 block text-sm font-medium">
-                Total Copies
-              </label>
-
+              <label htmlFor="copies">Total Copies</label>
               <input
                 id="copies"
                 type="number"
@@ -141,81 +189,86 @@ const AddBook = () => {
                   update("totalCopies", Number(e.target.value))
                 }
                 required
-                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5 text-sm outline-none focus:border-[#91d5a7]"
+                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5"
               />
             </div>
           </div>
 
-          {/* Book Image */}
           <div>
-            <label htmlFor="image" className="mb-2 block text-sm font-medium">
-              Book Image
-            </label>
+            <label htmlFor="image">Book Image</label>
 
             <input
               id="image"
               type="file"
               accept="image/*"
-              onChange={(e) => setImage(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0] ?? null;
+                setImage(selectedFile);
+                setPreview(
+                  selectedFile
+                    ? URL.createObjectURL(selectedFile)
+                    : ""
+                );
+              }}
               required
               className="w-full cursor-pointer rounded-md border border-[#35443a] bg-[#19251e] text-sm text-gray-300 file:mr-4 file:border-0 file:bg-[#26382c] file:px-4 file:py-2.5 file:text-white"
             />
+
+            {preview && (
+              <div className="relative mt-4 h-64 w-48">
+                <Image
+                  src={preview}
+                  alt="Book preview"
+                  fill
+                  unoptimized
+                  className="rounded-lg object-cover"
+                />
+              </div>
+            )}
           </div>
 
-          {/* Description */}
           <div>
-            <label htmlFor="description" className="mb-2 block text-sm font-medium">
-              Short Description
-            </label>
-
+            <label htmlFor="description">Short Description</label>
             <textarea
               id="description"
               rows={4}
-              placeholder="Write a short description about the book..."
               value={form.description}
               onChange={(e) => update("description", e.target.value)}
               required
-              className="w-full resize-y rounded-md border border-[#35443a] bg-[#19251e] px-3 py-3 text-sm outline-none focus:border-[#91d5a7]"
+              placeholder="Write a short description..."
+              className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-3"
             />
           </div>
 
-          {/* User Information */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="userName" className="mb-2 block text-sm font-medium">
-                User Name
-              </label>
-
+              <label htmlFor="userName">User Name</label>
               <input
                 id="userName"
-                type="text"
                 value={form.userName}
                 readOnly
-                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5 text-sm text-gray-400 outline-none"
+                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium">
-                User Email
-              </label>
-
+              <label htmlFor="email">User Email</label>
               <input
                 id="email"
                 type="email"
                 value={form.userEmail}
                 readOnly
-                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5 text-sm text-gray-400 outline-none"
+                className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5"
               />
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full rounded-md bg-[#91d5a7] py-3 text-sm font-semibold text-[#102016] transition hover:bg-[#a8e5ba] active:scale-[0.99]"
+            disabled={loading}
+            className="w-full rounded-md bg-[#91d5a7] py-3 font-semibold text-[#102016] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Add Book
+            {loading ? "Uploading..." : "Add Book"}
           </button>
         </form>
       </section>

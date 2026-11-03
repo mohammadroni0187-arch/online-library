@@ -101,15 +101,15 @@ const AllBooks = () => {
                 className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
                 {/* Image */}
-                <div className="relative h-64 bg-slate-100">
+                <div className="relative h-64 w-full overflow-hidden rounded-lg bg-gray-100">
                   {book.image ? (
                     <Image
-                      src={book.image}
-                      alt={book.title}
-                      fill
-                      unoptimized
-                      className="object-cover"
-                    />
+                        src={book.image}
+                        alt={book.title}
+                        fill
+                        className="object-contain"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
                   ) : (
                     <div className="flex h-full items-center justify-center text-slate-400">
                       <BookOpen size={50} />
