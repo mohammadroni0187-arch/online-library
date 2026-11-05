@@ -3,7 +3,6 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, EffectFade } from "swiper/modules";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen } from "lucide-react";
 
 import "swiper/css";

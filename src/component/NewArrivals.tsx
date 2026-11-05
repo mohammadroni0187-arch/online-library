@@ -3,7 +3,8 @@ import React from 'react';
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpen, UserRound } from "lucide-react";
+import { ArrowRight, BookOpen, UserRound, AlertCircle } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 interface Book {
   _id: string;
@@ -16,15 +17,32 @@ interface Book {
 
 
 const NewArrivals = async () => {
-  const res = await fetch("http://localhost:8000/books/latest", {
-    cache: "no-store",
-  });
+  let books: Book[] = [];
+  let loadError = false;
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch latest books");
+  try {
+    const res = await fetch(`${API_URL}/books/latest`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch latest books");
+    }
+
+    books = await res.json();
+  } catch (error) {
+    // Next.js throws this while probing static generation - let it through.
+    if (
+      error instanceof Error &&
+      error.message.includes("Dynamic server usage")
+    ) {
+      throw error;
+    }
+
+    // Keep the home page usable even when the API is not reachable.
+    console.error("New Arrivals Error:", error);
+    loadError = true;
   }
-
-  const books:Book []= await res.json();
 
   return (
     <section className="bg-slate-50 px-4 py-16 sm:py-20">
@@ -113,12 +131,28 @@ const NewArrivals = async () => {
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white py-16 text-center">
-            <BookOpen className="mx-auto mb-3 text-slate-400" size={40} />
+            {loadError ? (
+              <AlertCircle
+                className="mx-auto mb-3 text-red-400"
+                size={40}
+              />
+            ) : (
+              <BookOpen
+                className="mx-auto mb-3 text-slate-400"
+                size={40}
+              />
+            )}
+
             <h3 className="text-lg font-semibold text-slate-800">
-              No Books Available
+              {loadError
+                ? "Could Not Load Books"
+                : "No Books Available"}
             </h3>
+
             <p className="mt-2 text-sm text-slate-500">
-              New books will appear here.
+              {loadError
+                ? "Please start the API server and refresh the page."
+                : "New books will appear here."}
             </p>
           </div>
         )}
