@@ -15,6 +15,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -112,27 +113,29 @@ const handleSignOut = async () => {
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="font-semibold text-slate-900">
-                    <span className="block truncate">
-                      {user.name || "BookNook User"}
-                    </span>
-                    <span className="block truncate text-xs font-normal text-slate-500">
-                      {user.email}
-                    </span>
-                  </DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="font-semibold text-slate-900">
+                      <span className="block truncate">
+                        {user.name || "BookNook User"}
+                      </span>
+                      <span className="block truncate text-xs font-normal text-slate-500">
+                        {user.email}
+                      </span>
+                    </DropdownMenuLabel>
 
-                  <DropdownMenuSeparator />
+                    <DropdownMenuSeparator />
 
-                  <DropdownMenuItem onClick={() => router.push("/UserProfile")}>
-                    My Profile
-                  </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push("/UserProfile")}>
+                      My Profile
+                    </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={handleSignOut}
-                  >
-                    Logout
-                  </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={handleSignOut}
+                    >
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
