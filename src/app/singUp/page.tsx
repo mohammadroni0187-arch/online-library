@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label"
 
 import { authClient } from "@/lib/auth-client"
 import { CheckCircle2, XCircle, BookOpen } from "lucide-react"
+import PageTitle from "@/component/PageTitle"
 
 const SignUp = () => {
   const router = useRouter()
@@ -124,6 +125,8 @@ const SignUp = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+
+      <PageTitle title="Register" />
 
       <Card className="w-full max-w-md border-slate-200 shadow-xl">
 

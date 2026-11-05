@@ -1,9 +1,9 @@
 
 "use client"
 
-import React, { useState } from "react"
+import React, { Suspense, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,12 +19,17 @@ import { Label } from "@/components/ui/label"
 
 import { authClient } from "@/lib/auth-client"
 import { BookOpen } from "lucide-react"
+import PageTitle from "@/component/PageTitle"
 
 const LogInPage = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+
+  // Where to go after a successful login (used by the private pages).
+  const callbackURL = searchParams.get("callbackURL") || "/"
 
   // Email and Password Login
   const handleEmailLogIn = async (
@@ -44,7 +49,7 @@ const LogInPage = () => {
       const { data, error } = await authClient.signIn.email({
         email,
         password,
-        callbackURL: "/",
+        callbackURL,
       })
 
       if (error) {
@@ -53,7 +58,7 @@ const LogInPage = () => {
       }
 
       if (data) {
-        router.push("/")
+        router.push(callbackURL)
         router.refresh()
       }
     } catch {
@@ -71,7 +76,7 @@ const LogInPage = () => {
     try {
       const { error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL,
       })
 
       if (error) {
@@ -86,6 +91,8 @@ const LogInPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+
+      <PageTitle title="Login" />
 
       <Card className="w-full max-w-md border-slate-200 shadow-xl">
 
@@ -175,9 +182,9 @@ const LogInPage = () => {
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
-              href="/singUp"
+              href="/register"
               className="font-semibold text-primary hover:underline"
             >
               Register
@@ -192,4 +199,10 @@ const LogInPage = () => {
   )
 }
 
-export default LogInPage
+const LogInPageWithSuspense = () => (
+  <Suspense fallback={null}>
+    <LogInPage />
+  </Suspense>
+)
+
+export default LogInPageWithSuspense
