@@ -3,6 +3,7 @@
 
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { FiLogOut, FiUser } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -79,9 +80,12 @@ const UserInfo = () => {
           aria-label="User menu"
         >
           {hasValidImage ? (
-            <img
+            <Image
               src={user.image!}
               alt={user.name || "User"}
+              width={36}
+              height={36}
+              unoptimized
               referrerPolicy="no-referrer"
               onError={() => setFailedSrc(user.image!)}
               className="h-8 w-8 rounded-full border border-gray-100 object-cover sm:h-9 sm:w-9"
@@ -107,9 +111,12 @@ const UserInfo = () => {
             {/* User Information */}
             <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
               {hasValidImage ? (
-                <img
+                <Image
                   src={user.image!}
                   alt={user.name || "User"}
+                  width={36}
+                  height={36}
+                  unoptimized
                   referrerPolicy="no-referrer"
                   onError={() => setFailedSrc(user.image!)}
                   className="h-10 w-10 shrink-0 rounded-xl border border-gray-100 object-cover"
