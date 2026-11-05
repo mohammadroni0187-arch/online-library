@@ -1,10 +1,10 @@
-import React from 'react';
-
 
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, UserRound, ArrowLeft } from "lucide-react";
-import BorrowButton from '@/component/BorrowButton';
+import type { Metadata } from "next";
+import { BookOpen, UserRound, ArrowLeft, UserCheck } from "lucide-react";
+import BorrowButton from "@/component/BorrowButton";
+import { API_URL } from "@/lib/api";
 
 interface Book {
   _id: string;
@@ -25,25 +25,62 @@ interface BookDetailsPageProps {
   }>;
 }
 
+async function fetchBook(id: string): Promise<Book | null> {
+  try {
+    const res = await fetch(`${API_URL}/books/${id}`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) return null;
+
+    return (await res.json()) as Book;
+  } catch (error) {
+    console.error("Failed to fetch book:", error);
+    return null;
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: BookDetailsPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const book = await fetchBook(id);
+
+  if (!book) {
+    return { title: "Book Not Found" };
+  }
+
+  return {
+    title: book.title,
+    description: book.description,
+  };
+}
+
 const BookDetailsPage = async ({ params }: BookDetailsPageProps) => {
   const { id } = await params;
 
-  const res = await fetch(`http://localhost:8000/books/${id}`, {
-    cache: "no-store",
-  });
+  const book = await fetchBook(id);
 
-  if (!res.ok) {
+  if (!book) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold">Book Not Found</h1>
-        <Link href="/books" className="mt-5 text-emerald-700">
+      <section className="flex min-h-[60vh] flex-col items-center justify-center bg-slate-50 px-4 py-20 text-center">
+        <h1 className="text-3xl font-bold text-slate-900">
+          Book Not Found
+        </h1>
+
+        <p className="mt-3 text-slate-500">
+          This book does not exist or has been removed.
+        </p>
+
+        <Link
+          href="/books"
+          className="mt-6 rounded-lg bg-emerald-700 px-6 py-3 font-semibold text-white transition hover:bg-emerald-800"
+        >
           Back to All Books
         </Link>
-      </div>
+      </section>
     );
   }
-
-  const book: Book = await res.json();
 
   return (
     <section className="min-h-screen bg-slate-50 px-4 py-12">
@@ -118,6 +155,24 @@ const BookDetailsPage = async ({ params }: BookDetailsPageProps) => {
                 </p>
               </div>
             </div>
+
+            {/* Added by */}
+            {(book.userName || book.userEmail) && (
+              <div className="mt-4 flex items-start gap-2 rounded-lg bg-slate-50 p-4">
+                <UserCheck size={18} className="mt-0.5 text-emerald-700" />
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-500">Added by</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-slate-900">
+                    {book.userName || "Unknown"}
+                  </p>
+                  {book.userEmail && (
+                    <p className="truncate text-xs text-slate-500">
+                      {book.userEmail}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             <BorrowButton book={book} />
 
