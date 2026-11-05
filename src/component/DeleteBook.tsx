@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { toast } from "react-toastify";
+import { apiFetch } from "@/lib/api";
 
 interface DeleteBookProps {
   bookId: string;
@@ -22,15 +23,14 @@ interface DeleteBookProps {
 const DeleteBook = ({ bookId, onDelete }: DeleteBookProps) => {
   const handleDelete = async () => {
     try {
-      const res = await fetch(
-        `http://localhost:8000/books/${bookId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await apiFetch(`/books/${bookId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error("Failed to delete book");
+        throw new Error(data.message || "Failed to delete book");
       }
 
       toast.success("Book deleted successfully!");
@@ -38,7 +38,9 @@ const DeleteBook = ({ bookId, onDelete }: DeleteBookProps) => {
       onDelete(bookId);
     } catch (error) {
       console.error("Delete error:", error);
-      toast.error("Failed to delete book!");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete book!"
+      );
     }
   };
 

@@ -1,27 +1,41 @@
 
 "use client";
 
-import { BookOpen } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useState, type FormEvent } from "react";
+import { BookOpen } from "lucide-react";
 import { toast } from "react-toastify";
+import { authClient } from "@/lib/auth-client";
+import { apiFetch } from "@/lib/api";
+import PageTitle from "@/component/PageTitle";
 
 const initialForm = {
   title: "",
   author: "",
   category: "Fiction",
   totalCopies: 1,
-  image: "",
   description: "",
-  userName: "Your Name",
-  userEmail: "your@email.com",
 };
 
 const AddBook = () => {
+  const router = useRouter();
+
+  const { data: session, isPending } = authClient.useSession();
+
   const [form, setForm] = useState(initialForm);
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Login না থাকলে login page-এ পাঠাবে
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.replace(
+        `/login?callbackURL=${encodeURIComponent("/add-book")}`
+      );
+    }
+  }, [isPending, session, router]);
 
   const update = (
     field: keyof typeof form,
@@ -33,43 +47,61 @@ const AddBook = () => {
     }));
   };
 
-  // Step 1: Upload image to ImgBB
-  const uploadImage = async () => {
-  if (!image) {
-    throw new Error("Please select a book image");
-  }
-
-  const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("ImgBB API key is missing");
-  }
-
-  const formData = new FormData();
-  formData.append("image", image);
-
-  const res = await fetch(
-    `https://api.imgbb.com/1/upload?key=${apiKey}`,
-    {
-      method: "POST",
-      body: formData,
+  // ImgBB-তে image upload
+  const uploadImage = async (): Promise<string> => {
+    if (!image) {
+      throw new Error("Please select a book image");
     }
-  );
 
-  const data = await res.json();
+    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
 
-  if (!res.ok || !data.success) {
-    throw new Error(data.error?.message || "Image upload failed");
-  }
+    if (!apiKey) {
+      throw new Error("ImgBB API key is missing");
+    }
 
-  return data.data.url as string;
-};
+    const formData = new FormData();
+    formData.append("image", image);
 
-  // Step 2: Submit book information
+    const res = await fetch(
+      `https://api.imgbb.com/1/upload?key=${apiKey}`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(
+        data.error?.message || "Image upload failed"
+      );
+    }
+
+    return data.data.url as string;
+  };
+
+  // Book submit
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
+
+    if (!session?.user) {
+      toast.error("Please login first!");
+      router.replace("/login");
+      return;
+    }
+
+    if (!image) {
+      toast.error("Please select a book image");
+      return;
+    }
+
+    if (form.totalCopies < 1) {
+      toast.error("Total copies must be at least 1");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -77,28 +109,29 @@ const AddBook = () => {
       // First upload image
       const imageUrl = await uploadImage();
 
-      // Then create book data
+      // Session থেকে logged-in user's name ও email নেওয়া
       const bookData = {
         ...form,
         image: imageUrl,
-        availableCopies: form.totalCopies,
-        createdAt: new Date(),
+        totalCopies: Number(form.totalCopies),
+        availableCopies: Number(form.totalCopies),
+        userName: session.user.name,
+        userEmail: session.user.email,
+        createdAt: new Date().toISOString(),
       };
 
-      // Send data to backend
-      const res = await fetch(
-        "http://localhost:8000/add-destination",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(bookData),
-        }
-      );
+      // Express backend-এ data পাঠানো (identity আসবে verified token থেকে)
+      const res = await apiFetch("/books", {
+        method: "POST",
+        body: JSON.stringify(bookData),
+      });
+
+      const result = await res.json();
 
       if (!res.ok) {
-        throw new Error("Failed to add book");
+        throw new Error(
+          result.message || "Failed to add book"
+        );
       }
 
       toast.success("Book added successfully!");
@@ -106,8 +139,12 @@ const AddBook = () => {
       setForm(initialForm);
       setImage(null);
       setPreview("");
+
+      // Form submit হওয়ার পরে My Books page-এ যাবে
+      router.push("/my-books");
     } catch (error) {
       console.error("Add Book Error:", error);
+
       toast.error(
         error instanceof Error
           ? error.message
@@ -118,14 +155,31 @@ const AddBook = () => {
     }
   };
 
+  // Session check চলাকালীন form দেখাবে না
+  if (isPending) {
+    return (
+      <p className="py-20 text-center text-white">
+        Checking login...
+      </p>
+    );
+  }
+
+  // Login না থাকলে redirect হওয়ার আগ পর্যন্ত form দেখাবে না
+  if (!session) {
+    return null;
+  }
+
   return (
     <main className="min-h-screen bg-[#0b1510] text-white">
+      <PageTitle title="Add Book" />
       <section className="border-b border-white/5 bg-[#17251c] px-4 py-8 text-center sm:py-10">
         <div className="mx-auto flex max-w-3xl flex-col items-center">
           <BookOpen className="mb-2 text-[#91d5a7]" size={26} />
+
           <h1 className="font-serif text-3xl font-bold sm:text-4xl">
             Add a Book
           </h1>
+
           <p className="mt-2 text-sm text-gray-400">
             Put a book from your shelf into the library.
           </p>
@@ -134,7 +188,6 @@ const AddBook = () => {
 
       <section className="mx-auto w-full max-w-3xl px-4 py-10 sm:py-14">
         <form onSubmit={handleSubmit} className="space-y-5">
-
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="title">Book Title</label>
@@ -196,13 +249,13 @@ const AddBook = () => {
 
           <div>
             <label htmlFor="image">Book Image</label>
-
             <input
               id="image"
               type="file"
               accept="image/*"
               onChange={(e) => {
                 const selectedFile = e.target.files?.[0] ?? null;
+
                 setImage(selectedFile);
                 setPreview(
                   selectedFile
@@ -221,7 +274,7 @@ const AddBook = () => {
                   alt="Book preview"
                   fill
                   unoptimized
-                  className="rounded-lg object-cover"
+                  className="rounded-lg object-contain"
                 />
               </div>
             )}
@@ -233,7 +286,9 @@ const AddBook = () => {
               id="description"
               rows={4}
               value={form.description}
-              onChange={(e) => update("description", e.target.value)}
+              onChange={(e) =>
+                update("description", e.target.value)
+              }
               required
               placeholder="Write a short description..."
               className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-3"
@@ -245,7 +300,7 @@ const AddBook = () => {
               <label htmlFor="userName">User Name</label>
               <input
                 id="userName"
-                value={form.userName}
+                value={session.user.name || ""}
                 readOnly
                 className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5"
               />
@@ -256,7 +311,7 @@ const AddBook = () => {
               <input
                 id="email"
                 type="email"
-                value={form.userEmail}
+                value={session.user.email || ""}
                 readOnly
                 className="w-full rounded-md border border-[#35443a] bg-[#19251e] px-3 py-2.5"
               />
