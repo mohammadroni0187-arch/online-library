@@ -3,6 +3,7 @@
 
 import { authClient, signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useRef, useState } from "react";
 import {
   FiCamera,
@@ -11,6 +12,7 @@ import {
   FiUploadCloud,
 } from "react-icons/fi";
 import { toast } from "react-toastify";
+import PageTitle from "@/component/PageTitle";
 
 const UserProfile = () => {
   const { data: session, isPending, refetch } = authClient.useSession();
@@ -85,7 +87,7 @@ const UserProfile = () => {
           </p>
 
           <button
-            onClick={() => router.replace("/sign-in")}
+            onClick={() => router.replace("/login")}
             className="mt-5 cursor-pointer rounded-xl bg-[#058c42] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#047738]"
           >
             Sign In
@@ -162,7 +164,7 @@ const UserProfile = () => {
 
       toast.success("Signed out successfully!");
 
-      router.replace("login");
+      router.replace("/login");
       router.refresh();
     } catch (error) {
       console.error("Sign out failed:", error);
@@ -202,6 +204,7 @@ const UserProfile = () => {
 
   return (
     <main className="min-h-screen bg-[#f4f6f5] px-4 py-10 sm:py-12">
+      <PageTitle title="My Profile" />
       <div className="mx-auto max-w-2xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl">
@@ -218,9 +221,12 @@ const UserProfile = () => {
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
                 {hasValidImage ? (
-                  <img
+                  <Image
                     src={displayImage}
                     alt={currentName || "Profile"}
+                    width={80}
+                    height={80}
+                    unoptimized
                     referrerPolicy="no-referrer"
                     onError={() => setFailedSrc(displayImage)}
                     className="h-16 w-16 shrink-0 rounded-2xl bg-gray-100 object-cover shadow-sm sm:h-20 sm:w-20"
@@ -324,9 +330,12 @@ const UserProfile = () => {
                       : "border-gray-200 bg-gray-50 hover:border-green-400"
                   }`}
                 >
-                  <img
+                  <Image
                     src={preset}
                     alt={`Avatar ${index + 1}`}
+                    width={44}
+                    height={44}
+                    unoptimized
                     referrerPolicy="no-referrer"
                     className="h-full w-full object-cover"
                   />

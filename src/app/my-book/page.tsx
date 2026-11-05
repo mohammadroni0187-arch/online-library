@@ -1,27 +1,36 @@
+
+"use client";
+
 import MyBookClient from "@/component/MyBookClient";
+import PageTitle from "@/component/PageTitle";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export interface Book {
-  _id: string;
-  title: string;
-  author: string;
-  category: string;
-  image: string;
-  description: string;
-  totalCopies: number;
-  availableCopies?: number;
-}
-const MyBook = async () => {
-  const res = await fetch("http://localhost:8000/my-book", {
-    cache: "no-store",
-  });
+export default function MyBook() {
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch books");
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.replace(
+        `/login?callbackURL=${encodeURIComponent("/my-books")}`
+      );
+    }
+  }, [session, isPending, router]);
+
+  if (isPending) {
+    return <p className="py-10 text-center">Loading...</p>;
   }
 
-  const data: Book[] = await res.json();
+  if (!session) {
+    return null;
+  }
 
-  return <MyBookClient books={data} />;
-};
-
-export default MyBook;
+  return (
+    <>
+      <PageTitle title="My Books" />
+      <MyBookClient />
+    </>
+  );
+}

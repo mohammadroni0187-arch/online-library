@@ -95,11 +95,14 @@ function Carousel({
 
   React.useEffect(() => {
     if (!api) return
-    onSelect(api)
+    // Notify once after mount without calling setState synchronously
+    // while the effect runs.
+    const notify = window.setTimeout(() => onSelect(api), 0)
     api.on("reInit", onSelect)
     api.on("select", onSelect)
 
     return () => {
+      window.clearTimeout(notify)
       api?.off("select", onSelect)
     }
   }, [api, onSelect])
