@@ -5,8 +5,29 @@
  * - getAuthToken() asks Better Auth for the JWT of the current session, so the
  *   server can verify who the caller really is instead of trusting the body.
  */
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const LOCAL_API_URL = "http://localhost:8000";
+
+// Known production backend. Only used as a safety net so a production build
+// can never silently fall back to http://localhost:8000.
+const PRODUCTION_API_URL = "https://online-library-server-gilt.vercel.app";
+
+function resolveApiUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+
+  if (configured) return configured.replace(/\/+$/, "");
+
+  if (process.env.NODE_ENV !== "production") {
+    return LOCAL_API_URL;
+  }
+
+  console.error(
+    "[BookNook] NEXT_PUBLIC_API_URL is missing from this production build. " +
+      `Falling back to ${PRODUCTION_API_URL}.`
+  );
+  return PRODUCTION_API_URL;
+}
+
+export const API_URL = resolveApiUrl();
 
 export async function getAuthToken(): Promise<string | null> {
   try {

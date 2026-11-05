@@ -9,6 +9,18 @@ const db = client.db("Book-Nook");
 
 export const auth = betterAuth({
 
+  // Origin of this app itself. Used for OAuth redirect URIs, JWT iss/aud and
+  // trusted-origin checks. Set to the frontend URL in every environment
+  // (https://online-library-qtj5.vercel.app on Vercel, http://localhost:3000
+  // locally). Better Auth also reads the BETTER_AUTH_URL env variable.
+  baseURL: process.env.BETTER_AUTH_URL,
+
+  // Origins allowed to talk to this auth instance (CSRF/origin checks).
+  // Must contain every host the app is served from.
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://online-library-qtj5.vercel.app",
+  ],
   emailAndPassword: {
     enabled: true,
     // The assignment requires a minimum password length of 6 characters.
